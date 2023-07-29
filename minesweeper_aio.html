@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .btns {
+            height: 50px;
+            width: 50px;
+        }
+
+        .btns:disabled {
+            color: black;
+        }
+    </style>
+</head>
+
+<body>
+
+
+    <script>
+        let mine_field_array = Array(30).fill().map(() => Array(30));
+        document.addEventListener("DOMContentLoaded", () => {
+
+            let game_matrix = document.getElementById("game_matrix");
+            let difficulty_btn = document.getElementById("difficulty");
+            let smiley_btn = document.getElementById("smiley");
+            let difficulty = parseInt(difficulty_btn.value);
+            const MAX_DIFFICULTY = 30;
+            let difficulty_quantifier = difficulty / 5 - 1;
+            let game_started = false;
+            let mine_symbol = '💣';
+            let flag_symbol = '🚩';
+
+            difficulty_btn.addEventListener("click", () => {
+
+                difficulty_btn.value = parseInt(difficulty_btn.value) + 5;
+                difficulty = difficulty_btn.value;
+                start();
+
+                if (difficulty > MAX_DIFFICULTY) {
+                    difficulty_btn.value = 10;
+                    difficulty = difficulty_btn.value;
+                    start();
+                }
+            });
+
+            function start() {
+                display = document.getElementById("mine_count");
+                display.style["color"] = "black";
+                display.value = "START!";
+                document.getElementById("smiley").value = '🙂';
+                generate();
+                add_listeners();
+            }
+
+            smiley_btn.addEventListener("click", start);
+
+            function add_listeners() {
+                let buttons = document.getElementsByClassName("btns");
+                [].forEach.call(buttons, function (btn) {
+                    btn.addEventListener('contextmenu', function (e) {
+                        e.preventDefault();
+                        if (e.target.value != flag_symbol) {
+                            e.target.value = flag_symbol;
+                            e.target.style["background-color"] = "yellow";
+                            if (game_started) {
+                                document.getElementById("mine_count").value--;
+                            }
+                        } else {
+                            e.target.value = ' ';
+                            e.target.style["background-color"] = "";
+                            if (game_started) {
+                                document.getElementById("mine_count").value++;
+                            }
+
+                        }
+                        check_win();
+                    }, false);
+                    btn.addEventListener("click", function (e) {
+                        let id = e.target.id;
+                        let col = parseInt(id.split(':')[0][3]);
+                        let row = parseInt(id.split(':')[1]);
+                        if (game_started) {
+                            reveal(col, row);
+                        } else {
+                            lay_mines(col, row);
+                            generate_numbers();
+                            reveal(col, row)
+                            game_started = true;
+                        }
+                    });
+                });
+            }
+
+            function check_win() {
+                for (let i = 0; i < difficulty; i++) {
+                    for (let j = 0; j < difficulty; j++) {
+                        let btn = document.getElementById(`btn${i}:${j}`);
+                        if ((btn.disabled == false) && (mine_field_array[i][j] != mine_symbol || btn.value != flag_symbol)) {
+                            return false;
+                        }
+                    }
+                }
+                let display = document.getElementById("mine_count")
+                display.value = "YOU WIN!";
+                display.style["color"] = "green";
+                for (let i = 0; i < difficulty; i++) {
+                    for (let j = 0; j < difficulty; j++) {
+                        btn = document.getElementById(`btn${i}:${j}`);
+                        if (btn.value == flag_symbol && mine_field_array[i][j] == mine_symbol) {
+                            btn.style["background-color"] = "green";
+                        } else {
+                            btn.value = mine_field_array[i][j];
+                        }
+                        btn.disabled = true;
+                    }
+                }
+                document.getElementById("smiley").value = '😃';
+            }
+
+            function lose() {
+                for (let i = 0; i < difficulty; i++) {
+                    for (let j = 0; j < difficulty; j++) {
+                        btn = document.getElementById(`btn${i}:${j}`);
+                        if (btn.value == flag_symbol && mine_field_array[i][j] != mine_symbol) {
+                            btn.style["background-color"] = "yellow";
+                        } else {
+                            btn.value = mine_field_array[i][j];
+                        }
+                        btn.disabled = true;
+                    }
+                }
+                let display = document.getElementById("mine_count")
+                display.value = "YOU LOSE!";
+                display.style["color"] = "red";
+                document.getElementById("smiley").value = '😭';
+            }
+
+            function cascade_reveal(col, row) {
+                if (mine_field_array[col][row] != ' ') {
+                    return;
+                }
+                for (let i = -1; i <= 1; i++) {
+                    for (let j = -1; j <= 1; j++) {
+                        try {
+                            let btn = document.getElementById(`btn${col + i}:${row + j}`);
+                            btn.value = mine_field_array[col + i][row + j];
+                            if (btn.disabled == true) {
+                                continue;
+                            }
+                            btn.disabled = true;
+                            btn.style["background-color"] = "";
+                            cascade_reveal(col + i, row + j);
+                        } catch (e) {
+                        }
+                    }
+                }
+            }
+
+
+            function reveal(i, j) {
+                btn = document.getElementById(`btn${i}:${j}`);
+                if (btn.disabled == true) {
+                    return;
+                }
+                btn.value = mine_field_array[i][j];
+
+                if (btn.value == " ") {
+                    cascade_reveal(i, j)
+                } else if (btn.value == mine_symbol) {
+                    btn.disabled = true;
+                    btn.style["background-color"] = "crimson";
+                    lose();
+                } else {
+                    btn.style["background-color"] = "";
+                    btn.disabled = true;
+                    check_win();
+                }
+            }
+
+            function generate() {
+                game_started = false;
+                game_matrix.innerHTML = ""
+
+                for (let i = 0; i < difficulty; i++) {
+                    let row = document.createElement("tr");
+                    row.id = "row" + i;
+                    for (let j = 0; j < difficulty; j++) {
+
+                        let square = document.createElement("td");
+                        square.id = "square" + j;
+                        let btn = document.createElement("input");
+                        btn.type = "button";
+                        btn.id = "btn" + i + ":" + j;
+                        btn.classList += "btns";
+                        btn.value = " ";
+                        square.appendChild(btn);
+                        row.appendChild(square);
+
+                    }
+                    game_matrix.appendChild(row);
+                }
+
+            }
+
+            function lay_mines(col, row) {
+
+                let mine_counter = document.getElementById("mine_count");
+                mine_counter.value = 0;
+                for (let i = 0; i < difficulty; i++) {
+                    for (let j = 0; j < difficulty; j++) {
+                        let roll = Math.floor(Math.random() * 10);
+                        if (roll < difficulty_quantifier) {
+                            mine_field_array[i][j] = mine_symbol;
+                            mine_counter.value = parseInt(mine_counter.value) + 1;
+                        } else {
+                            mine_field_array[i][j] = ' ';
+                        }
+                    }
+                }
+            }
+
+            function mine_count(col, row) {
+                let count = 0;
+                for (let i = col - 1; i <= col + 1; i++) {
+                    for (let j = row - 1; j <= row + 1; j++) {
+                        try {
+                            if (mine_field_array[i][j] == mine_symbol) {
+                                count++;
+                            }
+                        } catch (e) {
+                            //ignore
+                        }
+                    }
+                }
+                return count;
+            }
+
+            function generate_numbers() {
+                for (let i = 0; i < difficulty; i++) {
+                    for (let j = 0; j < difficulty; j++) {
+                        if (mine_field_array[i][j] != mine_symbol) {
+                            let count = mine_count(i, j);
+                            if (count == 0) {
+                                mine_field_array[i][j] = ' ';
+                            } else {
+                                mine_field_array[i][j] = count;
+                            }
+                        }
+                    }
+                }
+            }
+
+
+        });
+    </script>
+
+
+    <center>
+        <table>
+            <tr>
+                <td colspan="3" align="center">
+                    <h1 id="title" style="font-family: fantasy; font-weight: 200; margin:0%">Minesweeper💣</h1>
+                    <small>Click smiley to start</small>
+                </td>
+            </tr>
+            <tr>
+                <td class="info">🚩<input type="text" id="mine_count" value="0" disabled="true"></td>
+                <td class="info">Difficulty: <input id="difficulty" type="button" value="10"></td>
+                <td class="info"><input type="button" id="smiley" value="🙂"></td>
+            </tr>
+            <tr>
+                <td colspan="3" id="game_td">
+                    <center>
+                        <table id="game_matrix">
+
+                        </table>
+                    </center>
+                </td>
+            </tr>
+        </table>
+    </center>
+        <h5 style="text-decoration: underline; margin: 2%;" align="center">
+            How to play?
+        </h5>
+        <div style="font-size: medium; font-weight: 100;">
+            <ul>
+                <li>Objective: Clear the grid without hitting any mines.</li>
+
+                <li>Grid: Start with a small grid.</li>
+
+                <li>Uncover Cells: Click or tap to reveal cells. Numbers show the number of mines neighboring that cell.
+                </li>
+
+                <li>Use Clues: Numbers indicate nearby mines. Deduce and flag potential mines.</li>
+
+                <li>Right-Click or Long-Press: Use flags and question marks to mark suspected mines.</li>
+
+                <li>Logical Deduction: Think logically, find patterns, and make educated guesses.</li>
+
+                <li>Chording: Click on a number with flagged cells to reveal remaining adjacent cells.</li>
+
+                <li>Safe Clicking: Click on areas where mines are already flagged.</li>
+
+                <li>Practice: Improve your skills with practice.</li>
+
+                <li>Have Fun: Enjoy the challenge and happy Minesweeping!</li>
+            </ul>
+        </div>
+</body>
+
+</html>
