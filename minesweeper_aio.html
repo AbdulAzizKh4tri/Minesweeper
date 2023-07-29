@@ -83,6 +83,9 @@
                         let id = e.target.id;
                         let col = parseInt(id.split(':')[0][3]);
                         let row = parseInt(id.split(':')[1]);
+                        if(e.target.value == flag_symbol) {
+                            document.getElementById("mine_count").value = parseInt(document.getElementById("mine_count").value) + 1
+                        }
                         if (game_started) {
                             reveal(col, row);
                         } else {
