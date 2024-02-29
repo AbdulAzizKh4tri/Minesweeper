@@ -21,9 +21,11 @@
 
 
     <script>
+        //game minefield
         let mine_field_array = Array(30).fill().map(() => Array(30));
         document.addEventListener("DOMContentLoaded", () => {
 
+            //Game setup (self explanatory)
             let game_matrix = document.getElementById("game_matrix");
             let difficulty_btn = document.getElementById("difficulty");
             let smiley_btn = document.getElementById("smiley");
@@ -34,6 +36,7 @@
             let mine_symbol = '💣';
             let flag_symbol = '🚩';
 
+            //Game restarts if difficulty changed
             difficulty_btn.addEventListener("click", () => {
 
                 difficulty_btn.value = parseInt(difficulty_btn.value) + 5;
@@ -47,6 +50,7 @@
                 }
             });
 
+            //Main function,resets the display and generates the field again (doesn't add the actual mines and numbers)
             function start() {
                 display = document.getElementById("mine_count");
                 display.style["color"] = "black";
@@ -56,11 +60,18 @@
                 add_listeners();
             }
 
+            //clicking smiley regenerates the field
             smiley_btn.addEventListener("click", start);
 
+            /*
+                rightclick flags the field
+                leftclick reveals it
+                if it is the first time clicking a field, the mines are laid and numbers are generated around them.
+            */
             function add_listeners() {
                 let buttons = document.getElementsByClassName("btns");
                 [].forEach.call(buttons, function (btn) {
+                    // Flag if right click
                     btn.addEventListener('contextmenu', function (e) {
                         e.preventDefault();
                         if (e.target.value != flag_symbol) {
@@ -79,15 +90,18 @@
                         }
                         check_win();
                     }, false);
+                    
+                    //Reveal if left click
                     btn.addEventListener("click", function (e) {
                         let id = e.target.id;
-                        let col = parseInt(id.split(':')[0][3]);
-                        let row = parseInt(id.split(':')[1]);
+                        let col = parseInt(id.split(':')[1]);
+                        let row = parseInt(id.split(':')[2]);
                         if(e.target.value == flag_symbol) {
                             document.getElementById("mine_count").value = parseInt(document.getElementById("mine_count").value) + 1
                         }
                         if (game_started) {
                             reveal(col, row);
+                            check_win();
                         } else {
                             lay_mines(col, row);
                             generate_numbers();
@@ -98,10 +112,13 @@
                 });
             }
 
+            
+            //Checks if the player has won the game
+            // If yes, end the game and congratulate
             function check_win() {
                 for (let i = 0; i < difficulty; i++) {
                     for (let j = 0; j < difficulty; j++) {
-                        let btn = document.getElementById(`btn${i}:${j}`);
+                        let btn = document.getElementById(`btn:${i}:${j}`);
                         if ((btn.disabled == false) && (mine_field_array[i][j] != mine_symbol || btn.value != flag_symbol)) {
                             return false;
                         }
@@ -112,7 +129,7 @@
                 display.style["color"] = "green";
                 for (let i = 0; i < difficulty; i++) {
                     for (let j = 0; j < difficulty; j++) {
-                        btn = document.getElementById(`btn${i}:${j}`);
+                        btn = document.getElementById(`btn:${i}:${j}`);
                         if (btn.value == flag_symbol && mine_field_array[i][j] == mine_symbol) {
                             btn.style["background-color"] = "green";
                         } else {
@@ -124,10 +141,11 @@
                 document.getElementById("smiley").value = '😃';
             }
 
+            //Ends the game, player Loses
             function lose() {
                 for (let i = 0; i < difficulty; i++) {
                     for (let j = 0; j < difficulty; j++) {
-                        btn = document.getElementById(`btn${i}:${j}`);
+                        btn = document.getElementById(`btn:${i}:${j}`);
                         if (btn.value == flag_symbol && mine_field_array[i][j] != mine_symbol) {
                             btn.style["background-color"] = "yellow";
                         } else {
@@ -142,6 +160,10 @@
                 document.getElementById("smiley").value = '😭';
             }
 
+            /* 
+                Clicking on an empty cell calls this
+                reveals every empty cell connected to it 
+            */
             function cascade_reveal(col, row) {
                 if (mine_field_array[col][row] != ' ') {
                     return;
@@ -149,7 +171,7 @@
                 for (let i = -1; i <= 1; i++) {
                     for (let j = -1; j <= 1; j++) {
                         try {
-                            let btn = document.getElementById(`btn${col + i}:${row + j}`);
+                            let btn = document.getElementById(`btn:${col + i}:${row + j}`);
                             btn.value = mine_field_array[col + i][row + j];
                             if (btn.disabled == true) {
                                 continue;
@@ -164,8 +186,9 @@
             }
 
 
+            //Reveal the square at i,j
             function reveal(i, j) {
-                btn = document.getElementById(`btn${i}:${j}`);
+                btn = document.getElementById(`btn:${i}:${j}`);
                 if (btn.disabled == true) {
                     return;
                 }
@@ -184,6 +207,7 @@
                 }
             }
 
+            //Generate field with appropriate IDs
             function generate() {
                 game_started = false;
                 game_matrix.innerHTML = ""
@@ -197,7 +221,7 @@
                         square.id = "square" + j;
                         let btn = document.createElement("input");
                         btn.type = "button";
-                        btn.id = "btn" + i + ":" + j;
+                        btn.id = "btn:" + i + ":" + j;
                         btn.classList += "btns";
                         btn.value = " ";
                         square.appendChild(btn);
@@ -209,6 +233,7 @@
 
             }
 
+            //Lay mines based on a probability difined by the difficulty
             function lay_mines(col, row) {
 
                 let mine_counter = document.getElementById("mine_count");
@@ -226,6 +251,7 @@
                 }
             }
 
+            //get the number of mines around the cell at [col,row]
             function mine_count(col, row) {
                 let count = 0;
                 for (let i = col - 1; i <= col + 1; i++) {
@@ -242,6 +268,7 @@
                 return count;
             }
 
+            //Set the value of squares to be the number of mines around them
             function generate_numbers() {
                 for (let i = 0; i < difficulty; i++) {
                     for (let j = 0; j < difficulty; j++) {
@@ -263,6 +290,7 @@
 
 
     <center>
+        <!-- GAME MATRIX -->
         <table>
             <tr>
                 <td colspan="3" align="center">
