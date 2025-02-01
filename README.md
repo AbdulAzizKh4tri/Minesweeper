@@ -5,4 +5,4 @@ And suffice to say I got a bit too obsessed.
 So I decided to make my own... I was going to do it using some other technologies, but I couldn't be bothered to delay the project learning something new and decided to just build it in normal HTML and JS.
 The file is called minesweeper_aio (all in one) because I merged the JS and HTML into a single file to make it easy to download and run.
 
-### Feel free to play!
+## [Click here to play!](https://abdulazizkh4tri.github.io/Minesweeper/minesweeper_aio.html)
