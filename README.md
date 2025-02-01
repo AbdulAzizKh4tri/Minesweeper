@@ -6,3 +6,4 @@ So I decided to make my own... I was going to do it using some other technologie
 The file is called minesweeper_aio (all in one) because I merged the JS and HTML into a single file to make it easy to download and run.
 
 ## [Click here to play!](https://abdulazizkh4tri.github.io/Minesweeper/minesweeper_aio.html)
+(click on smiley to start)
